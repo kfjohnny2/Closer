@@ -20,15 +20,18 @@ import douche.com.closer.R;
 public class LeDeviceAdapter extends BaseAdapter{
     private ArrayList<BluetoothDevice> mLeDevices;
     private LayoutInflater mInflator;
+    private int rssi;
+
     public LeDeviceAdapter(Context context) {
         super();
         mInflator = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         mLeDevices = new ArrayList<BluetoothDevice>();
     }
 
-    public void addDevice(BluetoothDevice device) {
+    public void addDevice(BluetoothDevice device, int rssi) {
         if(!mLeDevices.contains(device)) {
             mLeDevices.add(device);
+            this.rssi = rssi;
         }
     }
 
@@ -69,7 +72,7 @@ public class LeDeviceAdapter extends BaseAdapter{
             txtDeviceName.setText(deviceName);
         else
             txtDeviceName.setText("UNKNOWN DEVICE");
-        txtDeviceAdress.setText(device.getAddress());
+        txtDeviceAdress.setText(String.valueOf(rssi));
 
         return view;
     }
