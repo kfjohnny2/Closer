@@ -5,11 +5,16 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothManager;
+import android.bluetooth.BluetoothProfile;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.media.RingtoneManager;
 import android.os.Build;
@@ -20,14 +25,18 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v4.app.NotificationCompat;
 import android.support.v7.widget.Toolbar;
+import android.text.InputType;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -37,6 +46,7 @@ import java.util.Set;
 import java.util.jar.Manifest;
 
 import douche.com.closer.adapter.LeDeviceAdapter;
+import douche.com.closer.service.BLECallback;
 
 public class MainActivity extends AppCompatActivity {
     private LeDeviceAdapter mLeDeviceListAdapter;
@@ -47,7 +57,10 @@ public class MainActivity extends AppCompatActivity {
     private Handler mHandler;
     private boolean mScanning;
     private BluetoothLeScanner bleScanner;
+    private BluetoothGatt bluetoothGatt;
     private SwipeRefreshLayout swipe;
+    private ScanResult mScanResult;
+    private int minRssi = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +75,8 @@ public class MainActivity extends AppCompatActivity {
     private void setup() {
         listDevices = (ListView) findViewById(R.id.list_bluetooth_le_devices);
         swipe = (SwipeRefreshLayout) findViewById(R.id.swipe);
+
+        listDevices.setOnItemClickListener(deviceListener);
         BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
 
         mLeDeviceListAdapter = new LeDeviceAdapter(getApplicationContext());
@@ -80,14 +95,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onRefresh() {
                 scan();
-            }
-        });
-        listDevices.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                BluetoothDevice bDevice = (BluetoothDevice) listDevices.getItemAtPosition(i);
-                Snackbar.make(view, "Power of device signal: " + String.valueOf(bDevice.getBondState()), Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
             }
         });
     }
@@ -126,16 +133,69 @@ public class MainActivity extends AppCompatActivity {
     // Device scan callback.
     private ScanCallback mScanCallback = new ScanCallback() {
         @Override
-        public void onScanResult(int callbackType, ScanResult result) {
+        public void onBatchScanResults(List<ScanResult> results) {
+            super.onBatchScanResults(results);
+            for (int i = 0; i < results.size(); i++) {
+                Log.d("SCAN RESULT: ", results.get(i).getDevice().getName());
+            }
+        }
+
+        @Override
+        public void onScanFailed(int errorCode) {
+            Log.d("SCAN ERROR: ", String.valueOf(errorCode));
+        }
+
+        @Override
+        public void onScanResult(int callbackType, final ScanResult result) {
             super.onScanResult(callbackType, result);
-            mLeDeviceListAdapter.addDevice(result.getDevice(), result.getRssi());
-            mLeDeviceListAdapter.notifyDataSetChanged();
-            if (result.getRssi() < -60) {
-                sendNotification("OUT OF SIGHT", "YOUR BEACON IS TOO FAR");
+            MainActivity.this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mLeDeviceListAdapter.addDevice(result);
+                    mLeDeviceListAdapter.notifyDataSetChanged();
+                }
+            });
+            if (mDevice != null) {
+                if (result.getDevice() != null && result.getDevice().getName() != null) {
+                    if (result.getDevice().getName().equals(mDevice.getName()) && result.getRssi() < -minRssi) {
+                        sendNotification("OUT OF SIGHT", "YOUR BEACON IS TOO FAR");
+                    }
+                }
             }
             swipe.setRefreshing(false);
         }
     };
+
+    private BluetoothDevice mDevice;
+    AdapterView.OnItemClickListener deviceListener = new AdapterView.OnItemClickListener() {
+        @Override
+        public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+            mDevice = (BluetoothDevice) mLeDeviceListAdapter.getItem(i);
+            setMinRssi();
+            Snackbar.make(view, "Device for monitoring: " + String.valueOf(mDevice.getName()) + " for min rssi "+minRssi, Snackbar.LENGTH_LONG)
+                    .setAction("Action", null).show();
+        }
+    };
+
+    private void setMinRssi() {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setCancelable(false);
+        builder.setTitle("Setup your min distance for the beacon monitor. \n Ex.: Less is for more close distante, higher for bigger distances");
+
+        final EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_NUMBER);
+        builder.setView(input);
+
+        builder.setPositiveButton("Set", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                minRssi = Integer.parseInt(input.getText().toString());
+                dialog.cancel();
+            }
+        });
+
+        builder.show();
+    }
 
     public void sendNotification(String title, String content) {
         PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, new Intent(getApplicationContext(), MainActivity.class), PendingIntent.FLAG_UPDATE_CURRENT);
@@ -148,4 +208,49 @@ public class MainActivity extends AppCompatActivity {
         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.notify(0, mBuilder.build());
     }
+
+    private boolean mConnected;
+    private final BroadcastReceiver mGattUpdateReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final String action = intent.getAction();
+            if (BLECallback.ACTION_GATT_CONNECTED.equals(action)) {
+                mConnected = true;
+            } else if (BLECallback.ACTION_GATT_DISCONNECTED.equals(action)) {
+                mConnected = false;
+            } else if (BLECallback.
+                    ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
+                // Show all the supported services and characteristics on the
+                // user interface.
+            } else if (BLECallback.ACTION_DATA_AVAILABLE.equals(action)) {
+            }
+        }
+    };
+
+    private BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
+
+        @Override
+        public void onConnectionStateChange(final BluetoothGatt gatt, final int status, final int newState) {
+            MainActivity.this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (status == BluetoothGatt.GATT_SUCCESS && newState == BluetoothProfile.STATE_CONNECTED) {
+                        Toast.makeText(getApplicationContext(), "Peripheral connected", Toast.LENGTH_LONG).show();
+                    } else if (status == BluetoothGatt.GATT_SUCCESS && newState == BluetoothProfile.STATE_DISCONNECTED) {
+                        Toast.makeText(getApplicationContext(), "Peripheral Disconnected", Toast.LENGTH_LONG).show();
+                    } else if (status != BluetoothGatt.GATT_SUCCESS) {
+                        gatt.disconnect();
+                    }
+                }
+            });
+        }
+
+        @Override
+        public void onReadRemoteRssi(BluetoothGatt gatt, int rssi, int status) {
+            super.onReadRemoteRssi(gatt, rssi, status);
+            if (rssi < -60) {
+                sendNotification("OUT OF SIGHT", "YOUR BEACON IS TOO FAR");
+            }
+        }
+    };
 }

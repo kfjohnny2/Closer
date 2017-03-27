@@ -1,6 +1,7 @@
 package douche.com.closer.adapter;
 
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.le.ScanResult;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -28,10 +29,10 @@ public class LeDeviceAdapter extends BaseAdapter{
         mLeDevices = new ArrayList<BluetoothDevice>();
     }
 
-    public void addDevice(BluetoothDevice device, int rssi) {
-        if(!mLeDevices.contains(device)) {
-            mLeDevices.add(device);
-            this.rssi = rssi;
+    public void addDevice(ScanResult scanResult) {
+        if(!mLeDevices.contains(scanResult.getDevice())) {
+            mLeDevices.add(scanResult.getDevice());
+            this.rssi = scanResult.getRssi();
         }
     }
 
