@@ -1,6 +1,5 @@
 package douche.com.closer;
 
-import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
@@ -11,19 +10,17 @@ import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
+import android.bluetooth.le.ScanRecord;
 import android.bluetooth.le.ScanResult;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.media.RingtoneManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.annotation.RequiresApi;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -32,18 +29,12 @@ import android.support.v7.widget.Toolbar;
 import android.text.InputType;
 import android.util.Log;
 import android.view.View;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.util.jar.Manifest;
 
 import douche.com.closer.adapter.LeDeviceAdapter;
 import douche.com.closer.service.BLECallback;
@@ -151,13 +142,23 @@ public class MainActivity extends AppCompatActivity {
             MainActivity.this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
+                    ScanRecord sr = result.getScanRecord();
+                    double distance;
+                    if (sr != null && sr.getTxPowerLevel() > 0) {
+                        distance = Math.pow(10, (sr.getTxPowerLevel()-result.getRssi())/20);
+                        Log.i("DISTANCE ", distance + "mt");
+                    }
                     mLeDeviceListAdapter.addDevice(result);
                     mLeDeviceListAdapter.notifyDataSetChanged();
+
                 }
             });
+
             if (mDevice != null) {
                 if (result.getDevice() != null && result.getDevice().getName() != null) {
                     if (result.getDevice().getName().equals(mDevice.getName()) && result.getRssi() < -minRssi) {
+                        ScanRecord sr = result.getScanRecord();
+
                         sendNotification("OUT OF SIGHT", "YOUR BEACON IS TOO FAR");
                     }
                 }
@@ -170,14 +171,11 @@ public class MainActivity extends AppCompatActivity {
     AdapterView.OnItemClickListener deviceListener = new AdapterView.OnItemClickListener() {
         @Override
         public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-            mDevice = (BluetoothDevice) mLeDeviceListAdapter.getItem(i);
-            setMinRssi();
-            Snackbar.make(view, "Device for monitoring: " + String.valueOf(mDevice.getName()) + " for min rssi "+minRssi, Snackbar.LENGTH_LONG)
-                    .setAction("Action", null).show();
+            setMinRssi(view, i);
         }
     };
 
-    private void setMinRssi() {
+    private void setMinRssi(final View view, final int i) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setCancelable(false);
         builder.setTitle("Setup your min distance for the beacon monitor. \n Ex.: Less is for more close distante, higher for bigger distances");
@@ -190,7 +188,19 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 minRssi = Integer.parseInt(input.getText().toString());
+                mDevice = (BluetoothDevice) mLeDeviceListAdapter.getItem(i);
+//                Snackbar.make(view, "Device for monitoring: " + String.valueOf(mDevice.getName()) + " for min rssi "+minRssi, Snackbar.LENGTH_LONG)
+//                        .setAction("Action", null).show();
+                Toast.makeText(getApplicationContext(),"Device for monitoring: " + String.valueOf(mDevice.getName()) + " for min rssi "+minRssi, Toast.LENGTH_LONG ).show();
+                final Intent intent = new Intent(getApplicationContext(), DeviceControlActivity.class);
+                intent.putExtra(DeviceControlActivity.EXTRAS_DEVICE_NAME, mDevice.getName());
+                intent.putExtra(DeviceControlActivity.EXTRAS_DEVICE_ADDRESS, mDevice.getAddress());
+                if (mScanning) {
+                    bleScanner.stopScan(mScanCallback);
+                    mScanning = false;
+                }
                 dialog.cancel();
+                startActivity(intent);
             }
         });
 
@@ -209,23 +219,7 @@ public class MainActivity extends AppCompatActivity {
         notificationManager.notify(0, mBuilder.build());
     }
 
-    private boolean mConnected;
-    private final BroadcastReceiver mGattUpdateReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            final String action = intent.getAction();
-            if (BLECallback.ACTION_GATT_CONNECTED.equals(action)) {
-                mConnected = true;
-            } else if (BLECallback.ACTION_GATT_DISCONNECTED.equals(action)) {
-                mConnected = false;
-            } else if (BLECallback.
-                    ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
-                // Show all the supported services and characteristics on the
-                // user interface.
-            } else if (BLECallback.ACTION_DATA_AVAILABLE.equals(action)) {
-            }
-        }
-    };
+
 
     private BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
 
@@ -253,4 +247,29 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     };
+
+//    private boolean mConnected;
+//    private final BroadcastReceiver mGattUpdateReceiver = new BroadcastReceiver() {
+//        @Override
+//        public void onReceive(Context context, Intent intent) {
+//            final String action = intent.getAction();
+//            if (BLECallback.ACTION_GATT_CONNECTED.equals(action)) {
+//                mConnected = true;
+//                updateConnectionState(R.string.connected);
+//                invalidateOptionsMenu();
+//            } else if (BLECallback.ACTION_GATT_DISCONNECTED.equals(action)) {
+//                mConnected = false;
+//                updateConnectionState(R.string.disconnected);
+//                invalidateOptionsMenu();
+//                clearUI();
+//            } else if (BLECallback.
+//                    ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
+//                // Show all the supported services and characteristics on the
+//                // user interface.
+//                displayGattServices(mBluetoothLeService.getSupportedGattServices());
+//            } else if (BLECallback.ACTION_DATA_AVAILABLE.equals(action)) {
+//                displayData(intent.getStringExtra(BLECallback.EXTRA_DATA));
+//            }
+//        }
+//    };
 }

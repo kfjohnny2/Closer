@@ -30,6 +30,9 @@
         </activity>
         <activity android:name=".BluetoothActivity" />
         <activity android:name=".Main2Activity"/>
+        <activity android:name=".DeviceControlActivity" android:theme="@android:style/Theme.Holo.Light.DarkActionBar"/>
+        <service android:name=".service.BLECallback" android:enabled="true"/>
+
     </application>
 
 </manifest>

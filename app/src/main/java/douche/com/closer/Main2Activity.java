@@ -20,12 +20,16 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import douche.com.closer.adapter.LeDeviceAdapter;
 
 public class Main2Activity extends AppCompatActivity {
     private BluetoothAdapter mBluetoothAdapter;
@@ -36,6 +40,10 @@ public class Main2Activity extends AppCompatActivity {
     private ScanSettings settings;
     private List<ScanFilter> filters;
     private BluetoothGatt mGatt;
+    private BluetoothLeScanner bleScanner;
+    private LeDeviceAdapter mLeDeviceListAdapter;
+    private ListView listDevices;
+    private SwipeRefreshLayout swipe;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,8 +57,10 @@ public class Main2Activity extends AppCompatActivity {
         }
         final BluetoothManager bluetoothManager =
                 (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+        mLeDeviceListAdapter = new LeDeviceAdapter(getApplicationContext());
+        listDevices = (ListView) findViewById(R.id.list_bluetooth_le_devices);
+        swipe = (SwipeRefreshLayout) findViewById(R.id.swipe);
         mBluetoothAdapter = bluetoothManager.getAdapter();
-
     }
 
     @Override
@@ -102,29 +112,20 @@ public class Main2Activity extends AppCompatActivity {
     }
 
     private void scanLeDevice(final boolean enable) {
+        mLeDeviceListAdapter.clear();
+        bleScanner = mBluetoothAdapter.getBluetoothLeScanner();
+        bleScanner.startScan(mScanCallback);
+
         if (enable) {
             mHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    if (Build.VERSION.SDK_INT < 21) {
-                        mBluetoothAdapter.stopLeScan(mLeScanCallback);
-                    } else {
-                        mLEScanner.stopScan(mScanCallback);
-
-                    }
+                    bleScanner.startScan(mScanCallback);
+                    listDevices.setAdapter(mLeDeviceListAdapter);
                 }
             }, SCAN_PERIOD);
-            if (Build.VERSION.SDK_INT < 21) {
-                mBluetoothAdapter.startLeScan(mLeScanCallback);
-            } else {
-                mLEScanner.startScan(filters, settings, mScanCallback);
-            }
         } else {
-            if (Build.VERSION.SDK_INT < 21) {
-                mBluetoothAdapter.stopLeScan(mLeScanCallback);
-            } else {
-                mLEScanner.stopScan(mScanCallback);
-            }
+                bleScanner.stopScan(mScanCallback);
         }
     }
 
@@ -150,21 +151,6 @@ public class Main2Activity extends AppCompatActivity {
             Log.e("Scan Failed", "Error Code: " + errorCode);
         }
     };
-
-    private BluetoothAdapter.LeScanCallback mLeScanCallback =
-            new BluetoothAdapter.LeScanCallback() {
-                @Override
-                public void onLeScan(final BluetoothDevice device, int rssi,
-                                     byte[] scanRecord) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Log.i("onLeScan", device.toString());
-                            connectToDevice(device);
-                        }
-                    });
-                }
-            };
 
     public void connectToDevice(BluetoothDevice device) {
         if (mGatt == null) {
