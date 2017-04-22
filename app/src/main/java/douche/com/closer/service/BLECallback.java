@@ -35,6 +35,8 @@ public class BLECallback extends Service {
     private String mBluetoothDeviceAddress;
     private BluetoothGatt mBluetoothGatt;
     private int mConnectionState = STATE_DISCONNECTED;
+    public static final String CHARACTERISTIC_UPDATE_NOTIFICATION_DESCRIPTOR_UUID = "00002902-0000-1000-8000-00805f9b34fb";
+    public final static UUID tmp_uuid_1 = UUID.fromString(CHARACTERISTIC_UPDATE_NOTIFICATION_DESCRIPTOR_UUID);
 
     private static final int STATE_DISCONNECTED = 0;
     private static final int STATE_CONNECTING = 1;
@@ -230,8 +232,14 @@ public class BLECallback extends Service {
     }
 
     public String discover(final BluetoothGattCharacteristic charas){
-        short lsb = (short) (charas.getValue()[0] & 0xff);
-        return String.valueOf(lsb);
+        mBluetoothGatt.readCharacteristic(charas);
+        BluetoothGattDescriptor ccc = charas.getDescriptor(charas.getUuid());
+        if(mBluetoothGatt.readDescriptor(ccc))
+            mBluetoothGatt.setCharacteristicNotification(charas, true);
+        ccc.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+
+        mBluetoothGatt.writeDescriptor(ccc);
+        return ccc.toString();
     }
 
     /**

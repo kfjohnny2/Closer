@@ -144,8 +144,9 @@ public class MainActivity extends AppCompatActivity {
                 public void run() {
                     ScanRecord sr = result.getScanRecord();
                     double distance;
-                    if (sr != null && sr.getTxPowerLevel() > 0) {
-                        distance = Math.pow(10, (sr.getTxPowerLevel()-result.getRssi())/20);
+                    if (sr != null) {
+                        Integer txPowerLevel = DeviceControlActivity.getTxPowerLevel(sr.getBytes());
+                        distance = Math.pow(10, (txPowerLevel-result.getRssi())/20);
                         Log.i("DISTANCE ", distance + "mt");
                     }
                     mLeDeviceListAdapter.addDevice(result);

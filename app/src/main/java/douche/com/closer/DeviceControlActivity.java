@@ -21,8 +21,10 @@ import android.widget.SimpleExpandableListAdapter;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 
 import douche.com.closer.constants.SampleGattAttributes;
 import douche.com.closer.service.BLECallback;
@@ -36,7 +38,7 @@ public class DeviceControlActivity extends Activity {
 
     public static final String EXTRAS_DEVICE_NAME = "DEVICE_NAME";
     public static final String EXTRAS_DEVICE_ADDRESS = "DEVICE_ADDRESS";
-
+    private static final byte TXPOWER = 0x0A;
     private TextView mConnectionState;
     private TextView mDataField;
     private String mDeviceName;
@@ -291,5 +293,38 @@ public class DeviceControlActivity extends Activity {
         intentFilter.addAction(BLECallback.ACTION_GATT_SERVICES_DISCOVERED);
         intentFilter.addAction(BLECallback.ACTION_DATA_AVAILABLE);
         return intentFilter;
+    }
+
+    public static Integer getTxPowerLevel(byte[] scanRecord) {
+        // Check for BLE 4.0 TX power
+        int pos = findCodeInBuffer(scanRecord, TXPOWER);
+        if (pos > 0) {
+            return Integer.valueOf(scanRecord[pos]);
+        }
+        return null;
+    }
+
+    private static int findCodeInBuffer(byte[] buffer, byte code) {
+        final int length = buffer.length;
+        int i = 0;
+        while (i < length - 2) {
+            int len = buffer[i];
+            if (len < 0) {
+                return -1;
+            }
+
+            if (i + len >= length) {
+                return -1;
+            }
+
+            byte tcode = buffer[i + 1];
+            if (tcode == code) {
+                return i + 2;
+            }
+
+            i += len + 1;
+        }
+
+        return -1;
     }
 }
