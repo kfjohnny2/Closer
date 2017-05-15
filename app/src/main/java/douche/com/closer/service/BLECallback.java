@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.UUID;
 
 import douche.com.closer.constants.SampleGattAttributes;
+import douche.com.closer.util.GattInfo;
 
 /**
  * Created by johnnylee on 27/03/17.
@@ -34,9 +35,10 @@ public class BLECallback extends Service {
     private BluetoothAdapter mBluetoothAdapter;
     private String mBluetoothDeviceAddress;
     private BluetoothGatt mBluetoothGatt;
+    private static BLECallback mThis = null;
     private int mConnectionState = STATE_DISCONNECTED;
-    public static final String CHARACTERISTIC_UPDATE_NOTIFICATION_DESCRIPTOR_UUID = "00002902-0000-1000-8000-00805f9b34fb";
-    public final static UUID tmp_uuid_1 = UUID.fromString(CHARACTERISTIC_UPDATE_NOTIFICATION_DESCRIPTOR_UUID);
+    private BluetoothAdapter mBtAdapter = null;
+    private volatile boolean mBusy = false;
 
     private static final int STATE_DISCONNECTED = 0;
     private static final int STATE_CONNECTING = 1;
@@ -172,6 +174,7 @@ public class BLECallback extends Service {
     public boolean initialize() {
         // For API level 18 and above, get a reference to BluetoothAdapter through
         // BluetoothManager.
+        mThis = this;
         if (mBluetoothManager == null) {
             mBluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
             if (mBluetoothManager == null) {
@@ -231,15 +234,8 @@ public class BLECallback extends Service {
         return true;
     }
 
-    public String discover(final BluetoothGattCharacteristic charas){
-        mBluetoothGatt.readCharacteristic(charas);
-        BluetoothGattDescriptor ccc = charas.getDescriptor(charas.getUuid());
-        if(mBluetoothGatt.readDescriptor(ccc))
-            mBluetoothGatt.setCharacteristicNotification(charas, true);
-        ccc.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-
-        mBluetoothGatt.writeDescriptor(ccc);
-        return ccc.toString();
+    public static BLECallback getInstance() {
+        return mThis;
     }
 
     /**
@@ -256,65 +252,167 @@ public class BLECallback extends Service {
         mBluetoothGatt.disconnect();
     }
 
-    /**
-     * After using a given BLE device, the app must call this method to ensure resources are
-     * released properly.
-     */
-    public void close() {
-        if (mBluetoothGatt == null) {
-            return;
-        }
-        mBluetoothGatt.close();
-        mBluetoothGatt = null;
+
+    public boolean writeCharacteristic(BluetoothGattCharacteristic characteristic, byte b) {
+        if (!checkGatt())
+            return false;
+
+        byte[] val = new byte[1];
+        val[0] = b;
+        characteristic.setValue(val);
+
+        mBusy = true;
+        return mBluetoothGatt.writeCharacteristic(characteristic);
+    }
+
+    public boolean writeCharacteristic(BluetoothGattCharacteristic characteristic, boolean b) {
+        if (!checkGatt())
+            return false;
+
+        byte[] val = new byte[1];
+
+        val[0] = (byte) (b ? 1 : 0);
+        characteristic.setValue(val);
+        mBusy = true;
+        return mBluetoothGatt.writeCharacteristic(characteristic);
+    }
+
+    public boolean writeCharacteristic(BluetoothGattCharacteristic characteristic) {
+        if (!checkGatt())
+            return false;
+
+        mBusy = true;
+        return mBluetoothGatt.writeCharacteristic(characteristic);
     }
 
     /**
-     * Request a read on a given {@code BluetoothGattCharacteristic}. The read result is reported
-     * asynchronously through the {@code BluetoothGattCallback#onCharacteristicRead(android.bluetooth.BluetoothGatt, android.bluetooth.BluetoothGattCharacteristic, int)}
-     * callback.
+     * Retrieves the number of GATT services on the connected device. This should be invoked only after {@code BluetoothGatt#discoverServices()} completes
+     * successfully.
      *
-     * @param characteristic The characteristic to read from.
+     * @return A {@code integer} number of supported services.
      */
-    public void readCharacteristic(BluetoothGattCharacteristic characteristic) {
-        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
-            Log.w(TAG, "BluetoothAdapter not initialized");
-            return;
-        }
-        mBluetoothGatt.readCharacteristic(characteristic);
+    public int getNumServices() {
+        if (mBluetoothGatt == null)
+            return 0;
+
+        return mBluetoothGatt.getServices().size();
     }
 
     /**
-     * Enables or disables notification on a give characteristic.
-     *
-     * @param characteristic Characteristic to act on.
-     * @param enabled If true, enable notification.  False otherwise.
-     */
-    public void setCharacteristicNotification(BluetoothGattCharacteristic characteristic,
-                                              boolean enabled) {
-        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
-            Log.w(TAG, "BluetoothAdapter not initialized");
-            return;
-        }
-        mBluetoothGatt.setCharacteristicNotification(characteristic, enabled);
-
-        // This is specific to Heart Rate Measurement.
-        if (UUID_HEART_RATE_MEASUREMENT.equals(characteristic.getUuid())) {
-            BluetoothGattDescriptor descriptor = characteristic.getDescriptor(
-                    UUID.fromString(SampleGattAttributes.CLIENT_CHARACTERISTIC_CONFIG));
-            descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-            mBluetoothGatt.writeDescriptor(descriptor);
-        }
-    }
-
-    /**
-     * Retrieves a list of supported GATT services on the connected device. This should be
-     * invoked only after {@code BluetoothGatt#discoverServices()} completes successfully.
+     * Retrieves a list of supported GATT services on the connected device. This should be invoked only after {@code BluetoothGatt#discoverServices()} completes
+     * successfully.
      *
      * @return A {@code List} of supported services.
      */
     public List<BluetoothGattService> getSupportedGattServices() {
-        if (mBluetoothGatt == null) return null;
+        if (mBluetoothGatt == null)
+            return null;
 
         return mBluetoothGatt.getServices();
     }
+
+    public boolean setCharacteristicNotification(BluetoothGattCharacteristic characteristic, boolean enable) {
+        if (!checkGatt())
+            return false;
+
+        if (!mBluetoothGatt.setCharacteristicNotification(characteristic, enable)) {
+            Log.w(TAG, "setCharacteristicNotification failed");
+            return false;
+        }
+
+        BluetoothGattDescriptor clientConfig = characteristic.getDescriptor(GattInfo.CLIENT_CHARACTERISTIC_CONFIG);
+        if (clientConfig == null)
+            return false;
+
+        if (enable) {
+            Log.i(TAG, "enable notification");
+            clientConfig.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+        } else {
+            Log.i(TAG, "disable notification");
+            clientConfig.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
+        }
+
+        mBusy = true;
+        return mBluetoothGatt.writeDescriptor(clientConfig);
+    }
+
+    public boolean isNotificationEnabled(BluetoothGattCharacteristic characteristic) {
+        if (!checkGatt())
+            return false;
+
+        BluetoothGattDescriptor clientConfig = characteristic.getDescriptor(GattInfo.CLIENT_CHARACTERISTIC_CONFIG);
+        if (clientConfig == null)
+            return false;
+
+        return clientConfig.getValue() == BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE;
+    }
+
+    /**
+     * After using a given BLE device, the app must call this method to ensure resources are released properly.
+     */
+    public void close() {
+        if (mBluetoothGatt != null) {
+            Log.i(TAG, "close");
+            mBluetoothGatt.close();
+            mBluetoothGatt = null;
+        }
+    }
+
+    private boolean checkGatt() {
+        if (mBtAdapter == null) {
+            Log.w(TAG, "BluetoothAdapter not initialized");
+            return false;
+        }
+        if (mBluetoothGatt == null) {
+            Log.w(TAG, "BluetoothGatt not initialized");
+            return false;
+        }
+
+        if (mBusy) {
+            Log.w(TAG, "LeService busy");
+            return false;
+        }
+        return true;
+
+    }
+
+    public int numConnectedDevices() {
+        int n = 0;
+
+        if (mBluetoothGatt != null) {
+            List<BluetoothDevice> devList;
+            devList = mBluetoothManager.getConnectedDevices(BluetoothProfile.GATT);
+            n = devList.size();
+        }
+        return n;
+    }
+
+    //
+    // Utility functions
+    //
+    public static BluetoothGatt getBtGatt() {
+        return mThis.mBluetoothGatt;
+    }
+
+    public static BluetoothManager getBtManager() {
+        return mThis.mBluetoothManager;
+    }
+
+
+    public boolean waitIdle(int i) {
+        i /= 10;
+        while (--i > 0) {
+            if (mBusy)
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            else
+                break;
+        }
+
+        return i > 0;
+    }
+
 }

@@ -3,6 +3,7 @@ package douche.com.closer;
 import android.app.Activity;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -10,6 +11,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.res.Resources;
+import android.content.res.XmlResourceParser;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
@@ -28,6 +31,7 @@ import java.util.UUID;
 
 import douche.com.closer.constants.SampleGattAttributes;
 import douche.com.closer.service.BLECallback;
+import douche.com.closer.util.GattInfo;
 
 /**
  * Created by Johnny on 02/04/2017.
@@ -35,7 +39,6 @@ import douche.com.closer.service.BLECallback;
 
 public class DeviceControlActivity extends Activity {
     private final static String TAG = DeviceControlActivity.class.getSimpleName();
-
     public static final String EXTRAS_DEVICE_NAME = "DEVICE_NAME";
     public static final String EXTRAS_DEVICE_ADDRESS = "DEVICE_ADDRESS";
     private static final byte TXPOWER = 0x0A;
@@ -122,7 +125,6 @@ public class DeviceControlActivity extends Activity {
                                         mNotifyCharacteristic, false);
                                 mNotifyCharacteristic = null;
                             }
-                            mBLECallback.readCharacteristic(characteristic);
                         }
                         if ((charaProp | BluetoothGattCharacteristic.PROPERTY_NOTIFY) > 0) {
                             mNotifyCharacteristic = characteristic;
@@ -241,7 +243,7 @@ public class DeviceControlActivity extends Activity {
         ArrayList<ArrayList<HashMap<String, String>>> gattCharacteristicData
                 = new ArrayList<ArrayList<HashMap<String, String>>>();
         mGattCharacteristics = new ArrayList<ArrayList<BluetoothGattCharacteristic>>();
-
+        teste(gattServices);
         // Loops through available GATT Services.
         for (BluetoothGattService gattService : gattServices) {
             HashMap<String, String> currentServiceData = new HashMap<String, String>();
@@ -260,11 +262,18 @@ public class DeviceControlActivity extends Activity {
 
             // Loops through available Characteristics.
             for (BluetoothGattCharacteristic gattCharacteristic : gattCharacteristics) {
+                String charasName;
                 charas.add(gattCharacteristic);
                 HashMap<String, String> currentCharaData = new HashMap<String, String>();
                 uuid = gattCharacteristic.getUuid().toString();
+                if(gattCharacteristic.getDescriptor(GattInfo.CLIENT_CHARACTERISTIC_CONFIG) != null){
+                    mBLECallback.setCharacteristicNotification(gattCharacteristic,true);
+                    charasName = gattCharacteristic.getDescriptor(GattInfo.CLIENT_CHARACTERISTIC_CONFIG).toString();
+                } else{
+                    charasName = unknownCharaString;
+                }
                 currentCharaData.put(
-                        LIST_NAME, SampleGattAttributes.lookup(uuid, unknownCharaString));
+                        LIST_NAME, charasName);
                 currentCharaData.put(LIST_UUID, uuid);
                 gattCharacteristicGroupData.add(currentCharaData);
             }
@@ -284,6 +293,14 @@ public class DeviceControlActivity extends Activity {
                 new int[] { android.R.id.text1, android.R.id.text2 }
         );
         mGattServicesList.setAdapter(gattServiceAdapter);
+    }
+
+    public void teste(List<BluetoothGattService> gattServices){
+        // GATT database
+        Resources res = getResources();
+        XmlResourceParser xpp = res.getXml(R.xml.gatt_uuid);
+        GattInfo gatt = new GattInfo(xpp);
+        Log.d("GATT", gatt.toString());
     }
 
     private static IntentFilter makeGattUpdateIntentFilter() {
@@ -327,4 +344,7 @@ public class DeviceControlActivity extends Activity {
 
         return -1;
     }
+
+
+
 }

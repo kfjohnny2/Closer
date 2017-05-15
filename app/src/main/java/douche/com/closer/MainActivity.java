@@ -37,7 +37,6 @@ import android.widget.Toast;
 import java.util.List;
 
 import douche.com.closer.adapter.LeDeviceAdapter;
-import douche.com.closer.service.BLECallback;
 
 public class MainActivity extends AppCompatActivity {
     private LeDeviceAdapter mLeDeviceListAdapter;
@@ -146,8 +145,10 @@ public class MainActivity extends AppCompatActivity {
                     double distance;
                     if (sr != null) {
                         Integer txPowerLevel = DeviceControlActivity.getTxPowerLevel(sr.getBytes());
-                        distance = Math.pow(10, (txPowerLevel-result.getRssi())/20);
-                        Log.i("DISTANCE ", distance + "mt");
+                        if(txPowerLevel != null){
+                            distance = Math.pow(10, (txPowerLevel-result.getRssi())/20);
+                            Log.i("DISTANCE ", distance + "mt");
+                        }
                     }
                     mLeDeviceListAdapter.addDevice(result);
                     mLeDeviceListAdapter.notifyDataSetChanged();
