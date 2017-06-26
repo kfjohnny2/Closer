@@ -28,6 +28,7 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v7.widget.Toolbar;
 import android.text.InputType;
 import android.util.Log;
+import android.view.Menu;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.EditText;
@@ -37,6 +38,7 @@ import android.widget.Toast;
 import java.util.List;
 
 import douche.com.closer.adapter.LeDeviceAdapter;
+import douche.com.closer.model.User;
 
 public class MainActivity extends AppCompatActivity {
     private LeDeviceAdapter mLeDeviceListAdapter;
@@ -51,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
     private SwipeRefreshLayout swipe;
     private ScanResult mScanResult;
     private int minRssi = 0;
+    private User session;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,7 +68,7 @@ public class MainActivity extends AppCompatActivity {
     private void setup() {
         listDevices = (ListView) findViewById(R.id.list_bluetooth_le_devices);
         swipe = (SwipeRefreshLayout) findViewById(R.id.swipe);
-
+        session = new User(getApplicationContext());
         listDevices.setOnItemClickListener(deviceListener);
         BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
 
@@ -77,10 +80,15 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent beaconIntent= new Intent(getApplicationContext(), RegisterBeaconActivity.class);
+                Intent beaconIntent = new Intent(getApplicationContext(), RegisterBeaconActivity.class);
                 startActivity(beaconIntent);
             }
         });
+        if (session.getRole() == 0){
+            fab.setVisibility(View.GONE);
+        } else
+            fab.setVisibility(View.VISIBLE);
+
         swipe.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
@@ -145,8 +153,8 @@ public class MainActivity extends AppCompatActivity {
                     double distance;
                     if (sr != null) {
                         Integer txPowerLevel = DeviceControlActivity.getTxPowerLevel(sr.getBytes());
-                        if(txPowerLevel != null){
-                            distance = Math.pow(10, (txPowerLevel-result.getRssi())/20);
+                        if (txPowerLevel != null) {
+                            distance = Math.pow(10, (txPowerLevel - result.getRssi()) / 20);
                             Log.i("DISTANCE ", distance + "mt");
                         }
                     }
@@ -193,7 +201,7 @@ public class MainActivity extends AppCompatActivity {
                 mDevice = (BluetoothDevice) mLeDeviceListAdapter.getItem(i);
 //                Snackbar.make(view, "Device for monitoring: " + String.valueOf(mDevice.getName()) + " for min rssi "+minRssi, Snackbar.LENGTH_LONG)
 //                        .setAction("Action", null).show();
-                Toast.makeText(getApplicationContext(),"Device for monitoring: " + String.valueOf(mDevice.getName()) + " for min rssi "+minRssi, Toast.LENGTH_LONG ).show();
+                Toast.makeText(getApplicationContext(), "Device for monitoring: " + String.valueOf(mDevice.getName()) + " for min rssi " + minRssi, Toast.LENGTH_LONG).show();
                 final Intent intent = new Intent(getApplicationContext(), DeviceControlActivity.class);
                 intent.putExtra(DeviceControlActivity.EXTRAS_DEVICE_NAME, mDevice.getName());
                 intent.putExtra(DeviceControlActivity.EXTRAS_DEVICE_ADDRESS, mDevice.getAddress());
@@ -220,7 +228,6 @@ public class MainActivity extends AppCompatActivity {
         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.notify(0, mBuilder.build());
     }
-
 
 
     private BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
@@ -250,7 +257,12 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-//    private boolean mConnected;
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    //    private boolean mConnected;
 //    private final BroadcastReceiver mGattUpdateReceiver = new BroadcastReceiver() {
 //        @Override
 //        public void onReceive(Context context, Intent intent) {

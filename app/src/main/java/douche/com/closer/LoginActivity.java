@@ -119,6 +119,7 @@ public class LoginActivity extends AppCompatActivity {
         edUser = (EditText) findViewById(R.id.edName);
         edPass = (EditText) findViewById(R.id.edPass);
         btLogin.setOnClickListener(btLoginListener);
+        sharedPreferences = getSharedPreferences(PREFER_NAME, Context.MODE_PRIVATE);
 
         if(session.isUserLoggedIn()){
             // Starting MainActivity
@@ -130,10 +131,6 @@ public class LoginActivity extends AppCompatActivity {
             startActivity(i);
 
             finish();
-        } else{
-            // User Login button
-            sharedPreferences = getSharedPreferences(PREFER_NAME, Context.MODE_PRIVATE);
-
         }
 
     }

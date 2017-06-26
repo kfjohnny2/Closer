@@ -148,7 +148,7 @@ public class User {
     }
 
     public Integer getRole() {
-        return role;
+        return pref.getInt("Admin", 0);
     }
 
     public void setRole(Integer role) {
