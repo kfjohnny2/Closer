@@ -12,7 +12,7 @@ import java.net.URL;
  */
 
 public class WebServiceImpl {
-    public String sendPost(String url, String json) throws GenericException {
+    public static String sendPost(String url, String json) throws GenericException {
 
         try {
             HttpURLConnection request = (HttpURLConnection) new URL(url).openConnection();
@@ -38,7 +38,7 @@ public class WebServiceImpl {
         }
     }
 
-    private String readResponse(HttpURLConnection request) throws IOException {
+    private static String readResponse(HttpURLConnection request) throws IOException {
         ByteArrayOutputStream os;
         try (InputStream is = request.getInputStream()) {
             os = new ByteArrayOutputStream();

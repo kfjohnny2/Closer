@@ -11,8 +11,8 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 
-import douche.com.closer.MainActivity;
 import douche.com.closer.R;
+import douche.com.closer.service.ServiceEvent;
 
 /**
  * Created by johnnylee on 13/03/17.
@@ -21,12 +21,14 @@ import douche.com.closer.R;
 public class LeDeviceAdapter extends BaseAdapter{
     private ArrayList<BluetoothDevice> mLeDevices;
     private LayoutInflater mInflator;
+    private Context context;
     private int rssi;
 
     public LeDeviceAdapter(Context context) {
         super();
         mInflator = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         mLeDevices = new ArrayList<BluetoothDevice>();
+        this.context = context;
     }
 
     public void addDevice(ScanResult scanResult) {
@@ -68,11 +70,8 @@ public class LeDeviceAdapter extends BaseAdapter{
         TextView txtDeviceAdress = (TextView) view.findViewById(R.id.txt_device_adress);
 
         BluetoothDevice device = mLeDevices.get(i);
-        final String deviceName = device.getName();
-        if (deviceName != null && deviceName.length() > 0)
-            txtDeviceName.setText(deviceName);
-        else
-            txtDeviceName.setText("UNKNOWN DEVICE");
+        final String deviceName = ServiceEvent.getEventName(device.getAddress(), context);
+        txtDeviceName.setText(deviceName);
         txtDeviceAdress.setText(String.valueOf(rssi));
 
         return view;

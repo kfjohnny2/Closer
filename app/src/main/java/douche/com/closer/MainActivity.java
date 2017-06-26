@@ -77,8 +77,8 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                Intent beaconIntent= new Intent(getApplicationContext(), RegisterBeaconActivity.class);
+                startActivity(beaconIntent);
             }
         });
         swipe.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
