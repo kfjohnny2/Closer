@@ -118,18 +118,23 @@ public class LoginActivity extends AppCompatActivity {
         // get Email, Password input text
         edUser = (EditText) findViewById(R.id.edName);
         edPass = (EditText) findViewById(R.id.edPass);
-
-        Toast.makeText(getApplicationContext(),
-                "User Login Status: " + session.isUserLoggedIn(),
-                Toast.LENGTH_LONG).show();
-
-
-        // User Login button
-        btLogin = (Button) findViewById(R.id.btLogin);
-
-        sharedPreferences = getSharedPreferences(PREFER_NAME, Context.MODE_PRIVATE);
-
-
         btLogin.setOnClickListener(btLoginListener);
+
+        if(session.isUserLoggedIn()){
+            // Starting MainActivity
+            Intent i = new Intent(getApplicationContext(), MainActivity.class);
+            i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+            // Add new Flag to start new Activity
+            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(i);
+
+            finish();
+        } else{
+            // User Login button
+            sharedPreferences = getSharedPreferences(PREFER_NAME, Context.MODE_PRIVATE);
+
+        }
+
     }
 }
