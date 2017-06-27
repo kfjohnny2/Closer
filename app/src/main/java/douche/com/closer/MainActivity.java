@@ -12,7 +12,6 @@ import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanRecord;
 import android.bluetooth.le.ScanResult;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -20,7 +19,6 @@ import android.media.RingtoneManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -29,6 +27,8 @@ import android.support.v7.widget.Toolbar;
 import android.text.InputType;
 import android.util.Log;
 import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.EditText;
@@ -38,7 +38,7 @@ import android.widget.Toast;
 import java.util.List;
 
 import douche.com.closer.adapter.LeDeviceAdapter;
-import douche.com.closer.model.User;
+import douche.com.closer.model.Person;
 
 public class MainActivity extends AppCompatActivity {
     private LeDeviceAdapter mLeDeviceListAdapter;
@@ -53,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
     private SwipeRefreshLayout swipe;
     private ScanResult mScanResult;
     private int minRssi = 0;
-    private User session;
+    private Person session;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,7 +68,7 @@ public class MainActivity extends AppCompatActivity {
     private void setup() {
         listDevices = (ListView) findViewById(R.id.list_bluetooth_le_devices);
         swipe = (SwipeRefreshLayout) findViewById(R.id.swipe);
-        session = new User(getApplicationContext());
+        session = new Person(getApplicationContext());
         listDevices.setOnItemClickListener(deviceListener);
         BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
 
@@ -84,7 +84,7 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(beaconIntent);
             }
         });
-        if (session.getRole() == 0){
+        if (session.getRolePref() == 0){
             fab.setVisibility(View.GONE);
         } else
             fab.setVisibility(View.VISIBLE);
@@ -106,6 +106,7 @@ public class MainActivity extends AppCompatActivity {
             scan();
         }
     }
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -259,31 +260,19 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        return super.onCreateOptionsMenu(menu);
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu_main, menu);
+
+        // return true so that the menu pop up is opened
+        return true;
     }
 
-    //    private boolean mConnected;
-//    private final BroadcastReceiver mGattUpdateReceiver = new BroadcastReceiver() {
-//        @Override
-//        public void onReceive(Context context, Intent intent) {
-//            final String action = intent.getAction();
-//            if (BLECallback.ACTION_GATT_CONNECTED.equals(action)) {
-//                mConnected = true;
-//                updateConnectionState(R.string.connected);
-//                invalidateOptionsMenu();
-//            } else if (BLECallback.ACTION_GATT_DISCONNECTED.equals(action)) {
-//                mConnected = false;
-//                updateConnectionState(R.string.disconnected);
-//                invalidateOptionsMenu();
-//                clearUI();
-//            } else if (BLECallback.
-//                    ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
-//                // Show all the supported services and characteristics on the
-//                // user interface.
-//                displayGattServices(mBluetoothLeService.getSupportedGattServices());
-//            } else if (BLECallback.ACTION_DATA_AVAILABLE.equals(action)) {
-//                displayData(intent.getStringExtra(BLECallback.EXTRA_DATA));
-//            }
-//        }
-//    };
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()){
+            case R.id.action_logout:
+                session.logoutUser();
+        }
+        return super.onOptionsItemSelected(item);
+    }
 }

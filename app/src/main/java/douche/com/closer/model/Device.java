@@ -10,7 +10,6 @@ import org.json.JSONObject;
 public class Device {
     String name;
     String address;
-    Person admin;
 
     public Device(String name, String address) {
         this.name = name;
@@ -31,14 +30,6 @@ public class Device {
 
     public void setAddress(String address) {
         this.address = address;
-    }
-
-    public Person getAdmin() {
-        return admin;
-    }
-
-    public void setAdmin(Person admin) {
-        this.admin = admin;
     }
 
     public String toJSON(){

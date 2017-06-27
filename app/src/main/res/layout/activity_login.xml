@@ -15,7 +15,8 @@
         android:layout_height="wrap_content"
         android:hint="@string/username"
         android:maxLines="1"
-        android:layout_centerInParent="true"/>
+        android:layout_centerInParent="true"
+        android:imeOptions="actionNext"/>
 
     <EditText
         android:id="@+id/edPass"
@@ -24,7 +25,9 @@
         android:layout_marginTop="5dp"
         android:layout_below="@id/edName"
         android:hint="@string/password"
-        android:inputType="textPassword"/>
+        android:maxLines="1"
+        android:inputType="textPassword"
+        android:imeOptions="actionNext"/>
 
     <LinearLayout
         android:layout_width="wrap_content"

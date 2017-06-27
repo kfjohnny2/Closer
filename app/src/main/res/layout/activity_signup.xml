@@ -7,27 +7,41 @@
     tools:context="douche.com.closer.SignupActivity">
 
     <EditText
-        android:id="@+id/edNameSignup"
+        android:id="@+id/edName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
         android:layout_marginStart="19dp"
         android:layout_marginTop="26dp"
+        android:maxLines="1"
+        android:imeOptions="actionNext"
+        android:hint="Name"/>
+    
+    <EditText
+        android:id="@+id/edUsernameSignup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:ems="10"
+        android:maxLines="1"
         android:hint="User"
+        android:layout_alignStart="@+id/edName"
+        android:layout_below="@+id/edName"
+        android:imeOptions="actionNext"
         android:inputType="textPersonName" />
 
     <EditText
         android:id="@+id/edPassSignup"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignStart="@+id/edNameSignup"
-        android:layout_below="@+id/edNameSignup"
+        android:layout_alignStart="@+id/edUsernameSignup"
+        android:layout_below="@+id/edUsernameSignup"
         android:layout_marginTop="12dp"
         android:ems="10"
         android:hint="Password"
-        android:inputType="textPersonName" />
+        android:maxLines="1"
+        android:imeOptions="actionNext"
+        android:inputType="textPassword" />
 
     <CheckBox
         android:id="@+id/cbAdminSignup"
@@ -38,23 +52,12 @@
         android:layout_marginTop="22dp"
         android:text="Admin?" />
 
-    <EditText
-        android:id="@+id/edAddress"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignStart="@+id/cbAdminSignup"
-        android:layout_below="@+id/cbAdminSignup"
-        android:layout_marginTop="13dp"
-        android:ems="10"
-        android:hint="Beacon Address"
-        android:inputType="textPersonName" />
-
     <Button
         android:id="@+id/btSignup"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/edAddress"
+        android:layout_below="@+id/cbAdminSignup"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="34dp"
-        android:text="Sign @string/signup" />
+        android:text="Sign up" />
 </RelativeLayout>

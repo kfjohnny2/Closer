@@ -5,22 +5,19 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import java.io.IOException;
-
-import douche.com.closer.model.User;
+import douche.com.closer.model.Person;
 
 public class LoginActivity extends AppCompatActivity {
     private EditText edUser;
     private EditText edPass;
     private Button btLogin;
     private Button btSignUp;
-    private User session;
+    private Person session;
     private SharedPreferences sharedPreferences;
     private static final String PREFER_NAME = "Reg";
 
@@ -41,7 +38,6 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
-
     }
 
     private View.OnClickListener btLoginListener = new View.OnClickListener() {
@@ -54,9 +50,10 @@ public class LoginActivity extends AppCompatActivity {
                 if (username.trim().length() > 0 && password.trim().length() > 0) {
                     String uName = null;
                     String uPassword = null;
+                    String idUser = null;
 
-                    if (sharedPreferences.contains("Name")) {
-                        uName = sharedPreferences.getString("Name", "");
+                    if (sharedPreferences.contains("Username")) {
+                        uName = sharedPreferences.getString("Username", "");
 
                     }
 
@@ -65,12 +62,16 @@ public class LoginActivity extends AppCompatActivity {
 
                     }
 
+                    if (sharedPreferences.contains("IdUser")) {
+                        idUser = sharedPreferences.getString("IdUser", "");
+                    }
+
                     // Object uName = null;
                     // Object uEmail = null;
                     if (username.equals(uName) && password.equals(uPassword)) {
 
                         session.createUserLoginSession(uName,
-                                uPassword);
+                                uPassword, idUser);
 
                         // Starting MainActivity
                         Intent i = new Intent(getApplicationContext(), MainActivity.class);
@@ -112,8 +113,8 @@ public class LoginActivity extends AppCompatActivity {
         btLogin = (Button) findViewById(R.id.btLogin);
         btSignUp = (Button) findViewById(R.id.btSignup);
 
-        // User Session Manager
-        session = new User(getApplicationContext());
+        // Person Session Manager
+        session = new Person(getApplicationContext());
 
         // get Email, Password input text
         edUser = (EditText) findViewById(R.id.edName);

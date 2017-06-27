@@ -50,5 +50,18 @@ public class RegisterBeaconActivity extends AppCompatActivity {
             ServiceEvent.sendEvent(params[0], getApplicationContext());
             return null;
         }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+            Toast.makeText(RegisterBeaconActivity.this, "Beacon successfully registered", Toast.LENGTH_SHORT).show();
+            new RegisterBeaconActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    edAddress.setText("");
+                    edEventName.setText("");
+                }
+            });
+        }
     }
 }

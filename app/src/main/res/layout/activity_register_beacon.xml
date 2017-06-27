@@ -15,7 +15,10 @@
         android:layout_marginTop="59dp"
         android:ems="10"
         android:hint="EventName"
-        android:inputType="textPersonName" />
+        android:inputType="textPersonName"
+        android:maxLines="1"
+        android:imeOptions="actionNext"
+        />
 
     <EditText
         android:id="@+id/edBeaconAddress"
@@ -26,7 +29,9 @@
         android:layout_marginTop="26dp"
         android:ems="10"
         android:hint="Beacon Address"
-        android:inputType="textPersonName" />
+        android:inputType="textPersonName"
+        android:maxLines="1"
+        />
 
     <Button
         android:id="@+id/btRegister"
