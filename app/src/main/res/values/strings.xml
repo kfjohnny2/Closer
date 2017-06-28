@@ -25,4 +25,8 @@
     <string name="password">Password</string>
     <string name="username">Username</string>
     <string name="signup">Sign up</string>
+
+    <!-- Service items-->
+    <string name="url_base">https://behere-api-eltonvs1.c9users.io:8080/</string>
+
 </resources>

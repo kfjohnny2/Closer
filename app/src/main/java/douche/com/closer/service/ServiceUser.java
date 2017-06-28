@@ -22,9 +22,8 @@ public class ServiceUser {
                     .appendQueryParameter("password", user.getPassword())
                     .appendQueryParameter("role", String.valueOf(user.getRole()));
 
-            String query = builder.build().getEncodedQuery();
 //            URL url = new URL("https://behere-api-eltonvs1.c9users.io:8080/persons?name="+ URLEncoder.encode(user.getName(), "UTF-8")+"&username=" + URLEncoder.encode(user.getUserName(), "UTF-8")+"&password="+ URLEncoder.encode(user.getPassword(), "UTF-8")+"&role="+user.getRole());
-            return WebServiceImpl.sendPost("https://behere-api-eltonvs1.c9users.io:8080/persons", builder.build().getEncodedQuery());
+            return WebServiceImpl.sendPost("persons", builder.build().getEncodedQuery(), context);
         } catch (Exception e) {
             e.printStackTrace();
         }

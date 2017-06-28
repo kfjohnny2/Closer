@@ -1,5 +1,6 @@
 package douche.com.closer.service;
 
+import android.content.Context;
 import android.util.Log;
 
 import java.io.BufferedInputStream;
@@ -17,6 +18,7 @@ import java.net.URLEncoder;
 
 import javax.net.ssl.HttpsURLConnection;
 
+import douche.com.closer.R;
 import douche.com.closer.model.Device;
 import douche.com.closer.model.Person;
 
@@ -26,12 +28,12 @@ import douche.com.closer.model.Person;
 
 public class WebServiceImpl {
 
-    public static String get(String urlBase){
+    public static String get(String path, Context context){
         HttpURLConnection urlConnection = null;
         StringBuilder result = new StringBuilder();
 
         try {
-            URL url = new URL(urlBase);
+            URL url = new URL(context.getString(R.string.url_base)+path);
             urlConnection = (HttpURLConnection) url.openConnection();
             urlConnection.setRequestMethod("GET");
             InputStream in = new BufferedInputStream(urlConnection.getInputStream());
@@ -52,14 +54,14 @@ public class WebServiceImpl {
         return result.toString();
     }
 
-    public static String sendPost(String urlBase, String query){
+    public static String sendPost(String path, String query, Context context){
         // Send data
         InputStream inputStream;
         HttpURLConnection urlConnection;
         byte[] outputBytes;
         String responseData = null;
         try {
-            URL url = new URL(urlBase);
+            URL url = new URL(context.getString(R.string.url_base) + path);
 
         /* forming th java.net.URL object */
             urlConnection = (HttpURLConnection) url.openConnection();

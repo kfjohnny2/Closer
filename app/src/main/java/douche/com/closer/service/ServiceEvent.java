@@ -22,7 +22,7 @@ public class ServiceEvent {
 
     public static String getEventName(String address, Context context) {
 //        try {
-//            String result = WebServiceImpl.get("https://behere-api-eltonvs1.c9users.io:8080/devices?address=" +address);
+//            String result = WebServiceImpl.get("devices?address=" +address);
 //            JSONObject jsonObject = new JSONObject(result);
 //            return jsonObject.getString("address");
 //        } catch (JSONException e) {
@@ -38,7 +38,7 @@ public class ServiceEvent {
                     .appendQueryParameter("name", eventBeacon.getName())
                     .appendQueryParameter("address", String.valueOf(eventBeacon.getAddress()))
                     .appendQueryParameter("owner", user.getIdPref());
-            Log.d("TESTE: ", WebServiceImpl.sendPost("https://behere-api-eltonvs1.c9users.io:8080/devices", builder.build().getEncodedQuery()));
+            Log.d("TESTE: ", WebServiceImpl.sendPost("devices", builder.build().getEncodedQuery(), context));
         } catch (Exception e) {
             e.printStackTrace();
         }

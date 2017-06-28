@@ -9,7 +9,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
 
 import douche.com.closer.LoginActivity;
-import douche.com.closer.MainActivity;
 
 /**
  * Created by Johnny on 26/06/2017.
@@ -18,7 +17,7 @@ import douche.com.closer.MainActivity;
 public class Person {
 
 
-    private String id;
+    private String _id;
     private String name;
     private String userName;
     private String password;
@@ -139,7 +138,7 @@ public class Person {
     }
 
     public String getId() {
-        return id;
+        return _id;
     }
 
     public String getIdPref() {
@@ -147,6 +146,6 @@ public class Person {
     }
 
     public void setId(String id) {
-        this.id = id;
+        this._id = id;
     }
 }
