@@ -72,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
         listDevices.setOnItemClickListener(deviceListener);
         BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
 
-        mLeDeviceListAdapter = new LeDeviceAdapter(getApplicationContext());
+        mLeDeviceListAdapter = new LeDeviceAdapter(MainActivity.this);
         mBluetoothAdapter = bluetoothManager.getAdapter();
         mHandler = new Handler();
         enableBluetooth();

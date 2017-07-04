@@ -1,5 +1,6 @@
 package douche.com.closer.adapter;
 
+import android.app.ProgressDialog;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.le.ScanResult;
 import android.content.Context;
@@ -30,12 +31,15 @@ public class LeDeviceAdapter extends BaseAdapter{
     private Context context;
     private int rssi;
     private String deviceName;
-
+    private TextView txtEventName;
+    ProgressDialog dialog;
     public LeDeviceAdapter(Context context) {
         super();
         mInflator = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         mLeDevices = new ArrayList<BluetoothDevice>();
         this.context = context;
+//        dialog = ProgressDialog.show(context, "",
+//                "Loading. Please wait...", true);
     }
 
     public void addDevice(ScanResult scanResult) {
@@ -73,12 +77,12 @@ public class LeDeviceAdapter extends BaseAdapter{
     public View getView(int i, View view, ViewGroup viewGroup) {
         view = mInflator.inflate(R.layout.list_item_devices, null);
         // General ListView optimization code.
-        TextView txtDeviceName = (TextView) view.findViewById(R.id.txt_device_name);
+        txtEventName = (TextView) view.findViewById(R.id.txt_device_name);
         TextView txtDeviceAdress = (TextView) view.findViewById(R.id.txt_device_adress);
 
         BluetoothDevice device = mLeDevices.get(i);
+        txtEventName.setText("Searching event...");
         new EventAsyncTask().execute(device.getAddress());
-        txtDeviceName.setText(deviceName);
 //        txtDeviceAdress.setText(String.valueOf(rssi));
         txtDeviceAdress.setText(device.getAddress());
 
@@ -86,6 +90,10 @@ public class LeDeviceAdapter extends BaseAdapter{
     }
 
     private class EventAsyncTask extends AsyncTask<String, Void, String> {
+        @Override
+        protected void onPreExecute() {
+//            dialog.show();
+        }
 
         @Override
         protected String doInBackground(String... params) {
@@ -95,7 +103,7 @@ public class LeDeviceAdapter extends BaseAdapter{
         @Override
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
-            deviceName = s;
+            txtEventName.setText(s);
         }
     }
 }
