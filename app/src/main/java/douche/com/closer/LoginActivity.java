@@ -59,7 +59,7 @@ public class LoginActivity extends AppCompatActivity {
                     if(sharedPreferences.contains("Username")){
                         loginViaPrefs();
                     } else{
-                        new PersonTask().execute();
+                        new PersonTask().execute(username.trim(), password.trim());
                     }
                 } else {
                     // user didn't entered username or password
@@ -141,20 +141,20 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
-    private class PersonTask extends AsyncTask<Void, Void, ArrayList<Person>> {
+    private class PersonTask extends AsyncTask<String, Void, Person> {
 
         @Override
-        protected ArrayList<Person> doInBackground(Void... params) {
-            return ServicePerson.getPerson(getApplicationContext());
+        protected Person doInBackground(String... params) {
+            return ServicePerson.getPerson(params[0], params[1], getApplicationContext());
         }
 
         @Override
-        protected void onPostExecute(ArrayList<Person> persons) {
-            super.onPostExecute(persons);
-            for (Person p: persons) {
-                if (edUser.getText().toString().equals(p.getUserName()) &&  edPass.getText().toString().equals(p.getPassword())){
-                    session.createUserLoginSession(p.getUserName(),
-                            p.getPassword(), p.getId());
+        protected void onPostExecute(Person person) {
+            super.onPostExecute(person);
+            if(person != null){
+                if (edUser.getText().toString().equals(person.getUserName()) &&  edPass.getText().toString().equals(person.getPassword())){
+                    session.createUserLoginSession(person.getUserName(),
+                            person.getPassword(), person.getId());
                     // Starting MainActivity
                     Intent i = new Intent(getApplicationContext(), MainActivity.class);
                     i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -164,6 +164,10 @@ public class LoginActivity extends AppCompatActivity {
                     startActivity(i);
                     finish();
                 }
+            } else{
+                Toast.makeText(getApplicationContext(),
+                        "Username/Password is incorrect",
+                        Toast.LENGTH_LONG).show();
             }
         }
     }

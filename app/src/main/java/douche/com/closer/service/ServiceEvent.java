@@ -10,6 +10,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 import douche.com.closer.model.Device;
 import douche.com.closer.model.Person;
@@ -21,14 +23,14 @@ import douche.com.closer.model.Person;
 public class ServiceEvent {
 
     public static String getEventName(String address, Context context) {
-//        try {
-//            String result = WebServiceImpl.get("devices?address=" +address);
-//            JSONObject jsonObject = new JSONObject(result);
-//            return jsonObject.getString("address");
-//        } catch (JSONException e) {
-//            e.printStackTrace();
-//        }
-        return "A308 - CIVT";
+        try {
+            String result = WebServiceImpl.get("devices/address/" +address, context);
+            JSONObject jsonObject = new JSONObject(result);
+            return jsonObject.getString("name");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return "UNKNOWN";
     }
 
     public static void sendEvent(Device eventBeacon, Context context) {
@@ -42,5 +44,9 @@ public class ServiceEvent {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public static List<Device> getPersonDevices(String idPerson){
+        return new ArrayList<>();
     }
 }

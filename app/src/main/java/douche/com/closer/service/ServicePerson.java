@@ -7,7 +7,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import douche.com.closer.model.Person;
 
@@ -17,26 +16,25 @@ import douche.com.closer.model.Person;
 
 public class ServicePerson {
 
-    public static ArrayList<Person> getPerson(Context context) {
+    public static Person getPerson(String username, String password, Context context) {
         try {
             String result = WebServiceImpl.get("persons", context);
-            ArrayList<Person> listdata = new ArrayList<Person>();
             JSONArray jArray = new JSONArray(result);
-            Person person;
+            Person person = null;
             JSONObject jsonObject;
-            if (jArray != null) {
-                for (int i=0;i<jArray.length();i++){
-                    jsonObject = (JSONObject) jArray.get(i);
+            for (int i = 0; i < jArray.length(); i++) {
+                jsonObject = (JSONObject) jArray.get(i);
+                if (jsonObject.getString("username").equals(username) && jsonObject.getString("password").equals(password)) {
                     person = new Person();
                     person.setId(jsonObject.getString("_id"));
                     person.setName(jsonObject.getString("name"));
                     person.setUserName(jsonObject.getString("username"));
                     person.setPassword(jsonObject.getString("password"));
                     person.setRole(jsonObject.getInt("role"));
-                    listdata.add(person);
+//                    person.setDevices(ServiceEvent.getPersonDevices(person.getId()));
                 }
             }
-            return listdata;
+            return person;
         } catch (JSONException e) {
             e.printStackTrace();
         }
